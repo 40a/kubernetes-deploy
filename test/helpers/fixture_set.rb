@@ -152,6 +152,12 @@ module FixtureSetAssertions
       assert desired.present?, "Stateful set #{name} does not exist"
     end
   end
+
+  def assert_crd_present(name)
+    crds = v1beta1_kubeclient.get_custom_resource_definitions(namespace: namespace)
+    desired = crds.find { |crd| crd.metadata.name == name }
+    assert desired.present?, "CRD #{name} does not exist"
+  end
 end
 
 Dir.glob(File.expand_path("../fixture_sets/*.rb", __FILE__)).each { |file| require file }
