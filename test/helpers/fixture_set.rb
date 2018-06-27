@@ -153,7 +153,7 @@ module FixtureSetAssertions
     end
 
     def assert_hpa_present(name)
-      hpas = autoscaling_v1_kubeclient.get_horizontal_pod_autoscalers(namespace: namespace)
+      hpas = autoscaling_v2beta1_kubeclient.get_horizontal_pod_autoscalers(namespace: namespace)
       desired = hpas.find { |hpa| hpa.metadata.name == name }
       assert desired.present?, "HPA #{name} does not exist"
     end

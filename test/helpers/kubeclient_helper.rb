@@ -26,7 +26,7 @@ module KubeclientHelper
     @batch_v1beta1_kubeclient ||= build_batch_v1beta1_kubeclient(MINIKUBE_CONTEXT)
   end
 
-  def autoscaling_v1_kubeclient
-    @autoscaling_v1_kubeclient ||= build_autoscaling_v1_kubeclient(MINIKUBE_CONTEXT)
+  def autoscaling_v2beta1_kubeclient
+    @autoscaling_v2beta1_kubeclient ||= build_autoscaling_v2beta1_kubeclient(MINIKUBE_CONTEXT)
   end
 end

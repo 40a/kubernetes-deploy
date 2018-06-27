@@ -52,9 +52,9 @@ module KubernetesDeploy
       )
     end
 
-    def build_autoscaling_v1_kubeclient(context)
+    def build_autoscaling_v2beta1_kubeclient(context)
       _build_kubeclient(
-        api_version: "v1",
+        api_version: "v2beta1",
         context: context,
         endpoint_path: "/apis/autoscaling"
       )

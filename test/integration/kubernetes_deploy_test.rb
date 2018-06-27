@@ -1010,7 +1010,10 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
   end
 
   def test_hpa_can_be_successful
-    assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["hpa.yml"]))
+    assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["configmap-data.yml", "web.yml.erb", "hpa.yml"]))
   end
 
+  def test_hpa_can_times_out_when_no_matching_deployment
+    assert_deploy_failure(deploy_fixtures("hello-cloud", subset: ["hpa.yml"]), :timed_out)
+  end
 end
