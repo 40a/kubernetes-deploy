@@ -12,7 +12,7 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       %r{Deploying Pod/unmanaged-pod-[-\w]+ \(timeout: 60s\)}, # annotation timeout override
       "Hello from the command runner!", # unmanaged pod logs
       "Result: SUCCESS",
-      "Successfully deployed 18 resources"
+      "Successfully deployed 19 resources"
     ], in_order: true)
 
     assert_logs_match_all([
@@ -21,7 +21,8 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       %r{Service/web\s+Selects at least 1 pod},
       %r{DaemonSet/ds-app\s+1 updatedNumberScheduled, 1 desiredNumberScheduled, 1 numberReady},
       %r{StatefulSet/stateful-busybox},
-      %r{Service/redis-external\s+Doesn't require any endpoint}
+      %r{Service/redis-external\s+Doesn't require any endpoint},
+      %r{HorizontalPodAutoscaler/hello-hpa\s+Exists},
     ])
 
     # Verify that success section isn't duplicated for predeployed resources
@@ -70,8 +71,9 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       'ingress(\.extensions)? "web"',
       'daemonset(\.extensions)? "ds-app"',
       'statefulset(\.apps)? "stateful-busybox"',
+      'horizontalpodautoscaler "hello-hpa"',
     ] # not necessarily listed in this order
-    expected_msgs = [/Pruned 8 resources and successfully deployed 6 resources/]
+    expected_msgs = [/Pruned 9 resources and successfully deployed 6 resources/]
     expected_pruned.map do |resource|
       expected_msgs << /The following resources were pruned:.*#{resource}/
     end
@@ -1006,4 +1008,9 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
       "  datapoint: value1"
     ], in_order: true)
   end
+
+  def test_hpa_can_be_successful
+    assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["hpa.yml"]))
+  end
+
 end
