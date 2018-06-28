@@ -1,0 +1,20 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: hpa-deployment
+  annotations:
+    shipit.shopify.io/restart: "true"
+spec:
+  replicas: 1
+  progressDeadlineSeconds: 60
+  template:
+    metadata:
+      labels:
+        name: web
+        app: hello-cloud
+    spec:
+      containers:
+      - name: app
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ["tail", "-f", "/dev/null"]
