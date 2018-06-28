@@ -12,7 +12,7 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       %r{Deploying Pod/unmanaged-pod-[-\w]+ \(timeout: 60s\)}, # annotation timeout override
       "Hello from the command runner!", # unmanaged pod logs
       "Result: SUCCESS",
-      "Successfully deployed 18 resources"
+      "Successfully deployed 19 resources"
     ], in_order: true)
 
     assert_logs_match_all([
@@ -21,7 +21,8 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       %r{Service/web\s+Selects at least 1 pod},
       %r{DaemonSet/ds-app\s+1 updatedNumberScheduled, 1 desiredNumberScheduled, 1 numberReady},
       %r{StatefulSet/stateful-busybox},
-      %r{Service/redis-external\s+Doesn't require any endpoint}
+      %r{Service/redis-external\s+Doesn't require any endpoint},
+      %r{CustomResourceDefinition/mails.stable.example.io\s+Exists},
     ])
 
     # Verify that success section isn't duplicated for predeployed resources
@@ -1005,5 +1006,20 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
       "data:",
       "  datapoint: value1"
     ], in_order: true)
+  end
+
+  def test_crd_can_be_successful
+    assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["crd.yml"]))
+  end
+
+  def test_crd_can_fail
+    assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["crd.yml"]))
+    result = deploy_fixtures("hello-cloud", subset: ["crd.yml"]) do |f|
+      crd = f.dig("crd.yml", "CustomResourceDefinition").first
+      names = crd.dig("spec", "names")
+      crd["metadata"]["name"] = 'mis-matched.stable.example.io'
+      names["plural"] = 'mis-matched'
+    end
+    assert_deploy_failure(result)
   end
 end
