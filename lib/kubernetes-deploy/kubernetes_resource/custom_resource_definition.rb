@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 module KubernetesDeploy
   class CustomResourceDefinition < KubernetesResource
-    TIMEOUT = 10.seconds
+    TIMEOUT = 30.seconds
 
     def deploy_succeeded?
       names_accepted_status == "True"
