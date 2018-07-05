@@ -41,16 +41,6 @@ module KubernetesDeploy
   class DeployTask
     include KubeclientBuilder
 
-    PREDEPLOY_SEQUENCE = %w(
-      ResourceQuota
-      Cloudsql
-      Redis
-      Memcached
-      ConfigMap
-      PersistentVolumeClaim
-      ServiceAccount
-      Pod
-    )
     PROTECTED_NAMESPACES = %w(
       default
       kube-system
@@ -64,6 +54,20 @@ module KubernetesDeploy
     # core/v1/ReplicationController -- superseded by deployments/replicasets
     # extensions/v1beta1/ReplicaSet -- managed by deployments
     # core/v1/Secret -- should not committed / managed by shipit
+    def predeploy_sequence
+      ps = %w(
+        ResourceQuota
+        Cloudsql
+        Redis
+        Memcached
+        ConfigMap
+        PersistentVolumeClaim
+        ServiceAccount
+        Pod
+      )
+      ps + custom_resource_definitions.select(&:predeployable?).map(&:kind)
+    end
+
     def prune_whitelist
       wl = %w(
         core/v1/ConfigMap
@@ -81,7 +85,7 @@ module KubernetesDeploy
       if server_version >= Gem::Version.new('1.8.0')
         wl << "batch/v1beta1/CronJob"
       end
-      wl
+      wl + custom_resource_definitions.select(&:prunable?).map(&:kind)
     end
 
     def server_version
@@ -199,12 +203,41 @@ module KubernetesDeploy
 
     private
 
+    def custom_resource_definitions
+      dynamic_discovey.first
+    end
+
+    def custom_resources
+      dynamic_discovey[1]
+    end
+
+    def dynamic_discovey
+      @_dynamic_discovey ||= begin
+        crds = @sync_mediator.get_all(CustomResourceDefinition.kind).map do |r_def|
+          crd = KubernetesResource.build(namespace: @namespace, context: @context, logger: @logger,
+            definition: r_def, statsd_tags: @namespace_tags)
+
+          unless KubernetesDeploy.const_defined?("#{crd.kind}Definition")
+            KubernetesDeploy.const_set "#{crd.kind}Definition", Class.new(KubernetesDeploy::CustomResourceDefinition)
+          end
+          crd
+        end
+        crs = crds.flat_map do |crd|
+          @sync_mediator.get_all(crd.plural_name).map do |r_def|
+            KubernetesResource.new(namespace: @namespace, context: @context, logger: @logger,
+                                         definition: r_def, statsd_tags: @namespace_tags)
+          end
+        end
+        [crds, crs]
+      end
+    end
+
     def deploy_has_priority_resources?(resources)
-      resources.any? { |r| PREDEPLOY_SEQUENCE.include?(r.type) }
+      resources.any? { |r| predeploy_sequence.include?(r.type) }
     end
 
     def predeploy_priority_resources(resource_list)
-      PREDEPLOY_SEQUENCE.each do |resource_type|
+      predeploy_sequence.each do |resource_type|
         matching_resources = resource_list.select { |r| r.type == resource_type }
         next if matching_resources.empty?
         deploy_resources(matching_resources, verify: true, record_summary: false)

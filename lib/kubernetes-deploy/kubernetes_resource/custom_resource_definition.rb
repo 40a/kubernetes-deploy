@@ -15,6 +15,22 @@ module KubernetesDeploy
       UNUSUAL_FAILURE_MESSAGE
     end
 
+    def plural_name
+      @definition.dig("spec", "names", "plural")
+    end
+
+    def kind
+      @definition.dig("spec", "names", "kind")
+    end
+
+    def prunable?
+      @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "prunable") == "true"
+    end
+
+    def predeployable?
+      @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "predeploy") == "true"
+    end
+
     private
 
     def names_accepted_status

@@ -1,0 +1,5 @@
+---
+apiVersion: "api.foobar.com/v1"
+kind: Shredder
+metadata:
+  name: my-first-shredder
