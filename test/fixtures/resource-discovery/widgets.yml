@@ -6,7 +6,8 @@ metadata:
   annotations:
     kubernetes-deploy.shopify.io/metadata:
       prunable: "true"
-      predeploy: "true"
+  labels:
+    prunable: "true"
 spec:
   group: api.foobar.com
   version: v1

@@ -19,16 +19,20 @@ module KubernetesDeploy
       @definition.dig("spec", "names", "plural")
     end
 
+    def group_version_kind
+      group = @definition.dig("spec", "group")
+      version = @definition.dig("spec", "version")
+      "#{group}/#{version}/#{kind}"
+    end
+
     def kind
       @definition.dig("spec", "names", "kind")
     end
 
     def prunable?
-      @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "prunable") == "true"
-    end
-
-    def predeployable?
-      @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "predeploy") == "true"
+      label = @definition.dig("metadata", "labels", "prunable")
+      annotation = @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "prunable")
+      (label || annotation) == "true"
     end
 
     private
