@@ -4,10 +4,7 @@ kind: CustomResourceDefinition
 metadata:
   name: widgets.api.foobar.com
   annotations:
-    kubernetes-deploy.shopify.io/metadata:
-      prunable: "true"
-  labels:
-    prunable: "true"
+    kubernetes-deploy.shopify.io/metadata: '{ "prunable": "true" }'
 spec:
   group: api.foobar.com
   version: v1

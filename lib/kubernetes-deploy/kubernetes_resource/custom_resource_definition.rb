@@ -15,10 +15,6 @@ module KubernetesDeploy
       UNUSUAL_FAILURE_MESSAGE
     end
 
-    def plural_name
-      @definition.dig("spec", "names", "plural")
-    end
-
     def group_version_kind
       group = @definition.dig("spec", "group")
       version = @definition.dig("spec", "version")
@@ -30,9 +26,8 @@ module KubernetesDeploy
     end
 
     def prunable?
-      label = @definition.dig("metadata", "labels", "prunable")
-      annotation = @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata", "prunable")
-      (label || annotation) == "true"
+      json_annotation = @definition.dig("metadata", "annotations", "kubernetes-deploy.shopify.io/metadata")
+      JSON.parse(json_annotation.presence || '{}')["prunable"] == "true"
     end
 
     private

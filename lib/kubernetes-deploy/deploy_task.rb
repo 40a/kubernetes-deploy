@@ -37,6 +37,7 @@ require 'kubernetes-deploy/kubectl'
 require 'kubernetes-deploy/kubeclient_builder'
 require 'kubernetes-deploy/ejson_secret_provisioner'
 require 'kubernetes-deploy/renderer'
+require 'kubernetes-deploy/resource_discovery'
 
 module KubernetesDeploy
   class DeployTask
@@ -84,7 +85,7 @@ module KubernetesDeploy
       if server_version >= Gem::Version.new('1.8.0')
         wl << "batch/v1beta1/CronJob"
       end
-      wl + cluster_custom_resource_definitions.select(&:prunable?).map(&:group_version_kind)
+      wl + cluster_resource_discoverer.crds(@sync_mediator).select(&:prunable?).map(&:group_version_kind)
     end
 
     def server_version
@@ -202,18 +203,8 @@ module KubernetesDeploy
 
     private
 
-    def cluster_custom_resource_definitions
-      @_cluster_custom_resource_definitions ||= begin
-        @sync_mediator.get_all(CustomResourceDefinition.kind).map do |r_def|
-          crd = KubernetesResource.build(namespace: @namespace, context: @context, logger: @logger,
-            definition: r_def, statsd_tags: @namespace_tags)
-
-          unless KubernetesDeploy.const_defined?(crd.kind)
-            KubernetesDeploy.const_set crd.kind, Class.new(KubernetesDeploy::CustomResource)
-          end
-          crd
-        end
-      end
+    def cluster_resource_discoverer
+      ResourceDiscovery.new(namespace: @namespace, context: @context, logger: @logger, namespace_tags: @namespace_tags)
     end
 
     def deploy_has_priority_resources?(resources)
