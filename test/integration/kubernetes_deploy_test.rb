@@ -22,7 +22,7 @@ class KubernetesDeployTest < KubernetesDeploy::IntegrationTest
       %r{DaemonSet/ds-app\s+1 updatedNumberScheduled, 1 desiredNumberScheduled, 1 numberReady},
       %r{StatefulSet/stateful-busybox},
       %r{Service/redis-external\s+Doesn't require any endpoint},
-      %r{CustomResourceDefinition/mails.stable.example.io\s+Exists},
+      %r{CustomResourceDefinition/mails.stable.example.io\s+Succeeded},
     ])
 
     # Verify that success section isn't duplicated for predeployed resources
@@ -1010,6 +1010,10 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
 
   def test_crd_can_be_successful
     assert_deploy_success(deploy_fixtures("hello-cloud", subset: ["crd.yml"]))
+    assert_logs_match_all([
+      "Deploying CustomResourceDefinition/mails.stable.example.io (timeout: 30s)",
+      %r{CustomResourceDefinition/mails.stable.example.io\s+Succeeded}
+    ])
   end
 
   def test_crd_can_fail
@@ -1021,5 +1025,10 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
       names["plural"] = 'mis-matched'
     end
     assert_deploy_failure(result)
+    assert_logs_match_all([
+      "Deploying CustomResourceDefinition/mails.stable.example.io (timeout: 30s)",
+      "CustomResourceDefinition/mis-matched.stable.example.io: FAILED",
+      "Final status: ListKindConflict"
+    ])
   end
 end
