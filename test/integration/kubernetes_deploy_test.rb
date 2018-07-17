@@ -1010,11 +1010,21 @@ unknown field \"myKey\" in io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta",
   def test_hpa_can_be_successful
     skip if KUBE_SERVER_VERSION < Gem::Version.new('1.8.0')
     assert_deploy_success(deploy_fixtures("hpa"))
+    assert_logs_match_all([
+      "Deploying resources:",
+      "hpa.v2beta1.autoscaling/hello-hpa (timeout: 30s)",
+      %r{hpa.v2beta1.autoscaling/hello-hpa\s+Succeeded}
+    ])
   end
 
-  def test_hpa_can_times_out_when_no_matching_deployment
+  def test_hpa_can_fail_when_no_matching_deployment
     skip if KUBE_SERVER_VERSION < Gem::Version.new('1.8.0')
-    assert_deploy_failure(deploy_fixtures("hpa", subset: ["hpa.yml"]), :timed_out)
+    assert_deploy_failure(deploy_fixtures("hpa", subset: ["hpa.yml"]))
+    assert_logs_match_all([
+      "Deploying hpa.v2beta1.autoscaling/hello-hpa (timeout: 30s)",
+      "hpa.v2beta1.autoscaling/hello-hpa: FAILED",
+      "Final status: FailedGetScale"
+    ])
   end
 
   def test_hpa_can_be_pruned

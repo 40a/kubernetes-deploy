@@ -1,25 +1,36 @@
 # frozen_string_literal: true
 module KubernetesDeploy
   class HorizontalPodAutoscaler < KubernetesResource
-    PRUNABLE = true
     TIMEOUT = 30.seconds
 
     def deploy_succeeded?
-      conditions = @instance_data.dig("status", "conditions") || []
-      able_to_scale = conditions.detect { |c| c["type"] == "AbleToScale" } || {}
-      able_to_scale["status"] == "True"
+      able_to_scale_condition["status"] == "True"
     end
 
     def deploy_failed?
-      !exists?
-    end
-
-    def timeout_message
-      UNUSUAL_FAILURE_MESSAGE
+      return false unless exists?
+      able_to_scale_condition["status"] == "False"
     end
 
     def type
       'hpa.v2beta1.autoscaling'
+    end
+
+    def status
+      if !exists?
+        super
+      elsif deploy_succeeded?
+        "Succeeded"
+      else
+        able_to_scale_condition["reason"]
+      end
+    end
+
+    private
+
+    def able_to_scale_condition
+      conditions = @instance_data.dig("status", "conditions") || []
+      conditions.detect { |c| c["type"] == "AbleToScale" } || {}
     end
   end
 end

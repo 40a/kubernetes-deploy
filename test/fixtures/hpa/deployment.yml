@@ -10,8 +10,8 @@ spec:
   template:
     metadata:
       labels:
-        name: web
-        app: hello-cloud
+        name: hpa
+        app: hpa-deployment
     spec:
       containers:
       - name: app
