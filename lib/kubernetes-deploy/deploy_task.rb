@@ -248,6 +248,10 @@ module KubernetesDeploy
           @logger.info "  - #{r.id}"
         end
       end
+      if (global = resources.select(&:global?).presence)
+        @logger.info("Detected non-namespaced #{'resouce'.pluralize(global.count)} which will never be pruned:")
+        global.each { |r| @logger.info("  - #{r.id}") }
+      end
       resources
     end
 
